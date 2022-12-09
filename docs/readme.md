@@ -2,7 +2,7 @@
 
 The documentation is divided into two parts:
 
-## [Theoretical reading](theoretical-reading/index.md)
+## [Theoretical reading](theoretical-reading/readme.md)
 
 This is slightly more eloquent, but important reading.
 
@@ -11,14 +11,14 @@ This is slightly more eloquent, but important reading.
  - [03 Expiration](theoretical-reading/03-expiration.md)
  - [04 Storages](theoretical-reading/04-storages.md)
 
-## [Integrations](integrations/index.md)
+## [Integrations](integrations/readme.md)
 
 There are currently two integrations built into HTTP Sessions:
 
  - [01 ExpressJS](integrations/01-express.md)
  - [02 Insaner HTTP server](integrations/02-insaner.md)
 
-## [API reference](api/index.md)
+## [API reference](api/readme.md)
 
  - [01 AbstractSessionNamespace](api/01-abstract-session-namespace.md)
  - [02 Session](api/02-session.md)

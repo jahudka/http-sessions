@@ -12,9 +12,9 @@ and storage backends.
 npm install --save http-sessions
 ```
 
-## [Full documentation](docs/index.md)
+## [Full documentation](docs/readme.md)
 
-## Usage
+## Quick start
 
 ```typescript
 import { Session, InMemoryStorage } from 'http-sessions';
