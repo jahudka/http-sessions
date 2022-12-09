@@ -1,6 +1,6 @@
 # HTTP Sessions documentation
 
-The documentation is divided into two parts:
+The documentation is divided into three parts:
 
 ## [Theoretical reading](theoretical-reading/readme.md)
 
