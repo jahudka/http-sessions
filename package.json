@@ -1,0 +1,46 @@
+{
+  "name": "http-sessions",
+  "description": "NodeJS HTTP session manager",
+  "keywords": [
+    "nodejs",
+    "http",
+    "session",
+    "express",
+    "insaner"
+  ],
+  "author": {
+    "name": "Dan Kadera",
+    "email": "me@subsonic.cz"
+  },
+  "license": "MIT",
+  "version": "1.0.0",
+  "homepage": "https://github.com/jahudka/http-sessions",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jahudka/http-sessions.git"
+  },
+  "engines": {
+    "node": ">=16.0"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "@types/express": "^4.17.14",
+    "@types/node": "^16.11.7",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
+    "express": "^4.18.2",
+    "husky": "^8.0.2",
+    "insaner": "^1.2.1",
+    "prettier": "^2.8.0",
+    "typescript": "^4.9.3"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix"
+    ]
+  }
+}
