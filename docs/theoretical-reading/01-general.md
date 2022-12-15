@@ -20,7 +20,7 @@ request handlers.
 
 ## Concurrent requests and session locking
 
-To prevent race conditions when handling concurrent request with the
+To prevent race conditions when handling concurrent requests with the
 same session ID, starting a session with a defined session ID will
 acquire an exclusive lock on that ID. This could create a bottleneck,
 especially with `autoStart: true`. Sessions are automatically closed
@@ -28,13 +28,13 @@ and their data persisted into storage when a response is sent, and
 the exclusive lock is released then; but for many requests this will
 be far later than actually needed: often your handlers will only need
 _read-only_ access to the session data as it was at the time the session
-was started (e.g. to check if a user has previously logged in). Closing
-a session will persist the session data into storage and release the
-exclusive lock, but it will keep the session data in memory and make
-the session read-only - so if you run into bottlenecks with session
-locks, one thing you can do is start the session only when needed
-(as opposed to auto-starting on every request) and then closing it
-again as soon as you're certain you won't need to write to it.
+was started (e.g. to check if a user has previously logged in). You can
+start a session in read-only mode directly by passing `true` as the first
+argument to `session.start()`; this should be the fastest option under
+most circumstances. Alternatively, closing a session will persist the
+session data into storage and release the exclusive lock, but it will keep
+the session data in memory and make the session read-only for the remainder
+of the request.
 
 ## Virtual sessions
 
@@ -50,6 +50,6 @@ for each request (e.g. using a token in the `Authorization` header) -
 obviously using cookies for such clients and persisting the session data
 doesn't make sense - but if you take care to destroy sessions for such
 clients prior to sending a response, you can build a common authentication
-and permission checking mechanism using the session for both cases.
+and permission checking mechanism using sessions for both cases.
 
 Next: [Namespaces and storing data](02-namespaces-and-storing-data.md)

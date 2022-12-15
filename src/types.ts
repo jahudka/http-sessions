@@ -1,3 +1,5 @@
+import type { SessionLock } from './storages';
+
 export type ToPromise<T> = T extends Promise<any> ? T : Promise<T>;
 
 export type Key<V> = Exclude<keyof V, number | symbol>;
@@ -47,7 +49,8 @@ export type SessionState<
   Values extends ValueMap = ValueMap,
 > = {
   id?: string;
-  active?: boolean;
+  mode: 'inactive' | 'readonly' | 'read-write';
+  lock?: SessionLock;
   expireTransient?: boolean;
   data?: SessionData<Namespaces, Values>;
 };

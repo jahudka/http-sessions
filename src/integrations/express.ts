@@ -65,15 +65,21 @@ function patchResponse(
   options?: ExpressSessionCookieOptions,
   clear?: boolean,
 ): void {
+  const end = response.end;
   const _send = response._send;
   let closing: Promise<void> | undefined = undefined;
 
-  response._send = (...args: any) => {
-    if (!closing) {
-      closing = closeSessionAndSetCookies(response, session, sidCookie, transCookie, options, clear);
-    }
+  const close = () => {
+    return closing ??= closeSessionAndSetCookies(response, session, sidCookie, transCookie, options, clear);
+  };
 
-    closing.then(() => _send.call(response, ...args));
+  response.end = (...args: any) => {
+    close().then(() => end.call(response, ...args));
+    return response;
+  };
+
+  response._send = (...args: any) => {
+    close().then(() => _send.call(response, ...args));
     return true;
   };
 }
@@ -88,26 +94,27 @@ async function closeSessionAndSetCookies(
 ): Promise<void> {
   await session.close();
 
-  if (!session.isReadable()) {
-    return;
-  }
-
-  response._headerSent = false;
-  response._header = null;
-
   const id = session.getId();
   const expires = session.getExpiration();
 
   if (id) {
-    response.cookie(transCookie, '1', options);
-    response.cookie(sidCookie, id, {
-      ...options,
-      expires: expires ? new Date(expires) : undefined,
-    });
+    if (session.isActive()) {
+      response._headerSent = false;
+      response._header = null;
+
+      response.cookie(transCookie, '1', options);
+      response.cookie(sidCookie, id, {
+        ...options,
+        expires: expires ? new Date(expires) : undefined,
+      });
+      response._implicitHeader();
+    }
   } else if (clear) {
+    response._headerSent = false;
+    response._header = null;
+
     response.clearCookie(sidCookie, options);
     response.clearCookie(transCookie, options);
+    response._implicitHeader();
   }
-
-  response._implicitHeader();
 }

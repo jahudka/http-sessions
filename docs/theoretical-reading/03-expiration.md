@@ -73,4 +73,4 @@ for some data and then set a longer expiration for the session itself, the data
 will still expire based on the explicit setting, rather than when the session
 expires.
 
-Next: [Storages](04-storages.md)
+Next: [Storages and lock managers](04-storages-and-lock-managers.md)

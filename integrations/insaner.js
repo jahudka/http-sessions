@@ -1,1 +1,1 @@
-module.exports = require('../dist/integrations/insaner');
+module.exports = require('../lib/integrations/insaner');

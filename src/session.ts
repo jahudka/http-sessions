@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'async_hooks';
+import { v4 } from 'uuid';
 import { AbstractSessionNamespace } from './abstractSessionNamespace';
 import { SessionNamespace } from './sessionNamespace';
 import type { StorageInterface } from './storages';
@@ -36,12 +37,14 @@ export class Session<
       throw new Error('Session is already initialised');
     }
 
-    const [id, expireTransient, cb]: [string | undefined, boolean, () => any] =
+    const [rawId, expireTransient, cb]: [string | undefined, boolean, () => any] =
       c0 ? [a0, b0, c0] :
       b0 ? [a0, false, b0] :
       [undefined, false, a0];
+    const id = rawId && /^[a-z0-9-._]+$/i.test(rawId) ? rawId : undefined;
 
     return this.context.run({
+      mode: 'inactive',
       id,
       expireTransient,
     }, async () => {
@@ -61,64 +64,101 @@ export class Session<
     return this.state.id !== undefined;
   }
 
+  public isActive(): boolean {
+    return this.state.mode !== 'inactive';
+  }
+
   public isReadable(): boolean {
-    return this.state.active !== undefined;
+    return this.isActive();
   }
 
   public isWritable(): boolean {
-    return this.state.active === true;
+    return this.state.mode === 'read-write';
   }
 
-  public async start(): Promise<void> {
-    if (this.state.active) {
+  public async start(readonly: boolean = false): Promise<void> {
+    if (this.state.mode === 'read-write') {
       return;
     }
 
-    this.state.active = true;
+    this.state.mode = readonly ? 'readonly' : 'read-write';
 
     if (this.state.id) {
-      const data = await this.storage.lockAndRead(this.state.id);
+      if (!readonly) {
+        this.state.lock = await this.storage.lock(this.state.id);
+      }
 
-      if (data) {
-        this.state.data = cleanupExpiredData(
-          data as SessionData<Namespaces, Values>,
-          this.state.expireTransient,
-        );
+      try {
+        const rawData = await this.storage.read(this.state.lock || this.state.id);
+        this.state.data = rawData && cleanupExpiredData(rawData as any, this.state.expireTransient) as any;
 
         if (!this.state.data) {
-          await this.storage.purge(this.state.id);
-          this.state.id = await this.storage.allocateAndLockId();
+          // session expired
+          if (rawData) {
+            await this.storage.purge(this.state.lock || this.state.id);
+          } else if (this.state.lock) {
+            await this.state.lock.release();
+          }
+
+          delete this.state.id;
+          delete this.state.lock;
         }
+      } catch (e: any) {
+        this.state.mode = 'inactive';
+        this.state.lock && await this.state.lock.release();
+        delete this.state.id;
+        delete this.state.lock;
+        delete this.state.data;
+        throw e;
       }
     }
 
-    if (this.data.expires === undefined && this.options.defaultExpiration !== undefined) {
+    if (!readonly && this.data.expires === undefined && this.options.defaultExpiration !== undefined) {
       this.setExpiration(this.options.defaultExpiration);
     }
   }
 
-  public async close(): Promise<void> {
-    if (!this.state.active) {
+  public async release(): Promise<void> {
+    if (this.state.mode !== 'read-write') {
       return;
     }
 
-    this.state.active = false;
+    this.state.mode = 'readonly';
 
-    if (!this.state.id) {
-      this.state.id = await this.storage.allocateAndLockId();
+    if (this.state.lock) {
+      await this.state.lock.release();
+      delete this.state.lock;
+    }
+  }
+
+  public async close(): Promise<void> {
+    if (this.state.mode !== 'read-write') {
+      return;
     }
 
-    await this.storage.writeAndUnlock(this.state.id, this.data, this.data.expires || undefined);
+    this.state.mode = 'readonly';
+
+    if (!this.state.lock && !this.state.id) {
+      this.state.id = v4();
+      this.state.lock = await this.storage.lock(this.state.id);
+    }
+
+    if (this.state.lock) {
+      await this.storage.write(this.state.lock, this.data, this.data.expires || undefined, true);
+      delete this.state.lock;
+    }
   }
 
   public async destroy(): Promise<void> {
-    delete this.state.active;
+    const lockOrId = this.state.lock || this.state.id;
+    this.state.mode = 'inactive';
+    delete this.state.id;
+    delete this.state.lock;
     delete this.state.data;
     delete this.state.expireTransient;
 
-    if (this.state.id) {
-      await this.storage.purge(this.state.id);
-      delete this.state.id;
+    if (lockOrId) {
+      await this.storage.purge(lockOrId);
     }
   }
 
@@ -132,7 +172,11 @@ export class Session<
 
   public async regenerateId(): Promise<void> {
     this.assertWritable();
-    this.state.id = await this.storage.allocateAndLockId(this.state.id);
+    const previous = this.state.lock!;
+
+    this.state.id = v4();
+    this.state.lock = await this.storage.lock(this.state.id);
+    await this.storage.purge(previous);
   }
 
   public getNamespace<K extends Key<Namespaces>>(name: K): SessionNamespace<Namespaces[K]> {

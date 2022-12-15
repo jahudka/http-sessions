@@ -1,1 +1,1 @@
-module.exports = require('../dist/integrations/express');
+module.exports = require('../lib/integrations/express');

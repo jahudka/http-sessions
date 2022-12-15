@@ -15,7 +15,7 @@
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
     "types": ["node"],
-    "outDir": "dist"
+    "outDir": "lib"
   },
   "include": [
     "src/**/*.ts"

@@ -33,19 +33,17 @@ export function installInsanerSessions(
   server.on('response', async (response, request) => {
     await session.close();
 
-    if (!session.isReadable()) {
-      return;
-    }
-
     const id = session.getId();
     const expires = session.getExpiration();
 
     if (id) {
-      response.setCookie(transCookie, '1', cookieOptions);
-      response.setCookie(sidCookie, id, {
-        ...cookieOptions,
-        expires,
-      });
+      if (session.isActive()) {
+        response.setCookie(transCookie, '1', cookieOptions);
+        response.setCookie(sidCookie, id, {
+          ...cookieOptions,
+          expires,
+        });
+      }
     } else if (request.cookies[sidCookie] || request.cookies[transCookie]) {
       response.setCookie(sidCookie, '', { ...cookieOptions, expires: 0 });
       response.setCookie(transCookie, '', { ...cookieOptions, expires: 0 });

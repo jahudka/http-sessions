@@ -6,7 +6,7 @@ node_modules:
 
 .PHONY: clean
 clean:
-	rm -rf dist
+	rm -rf lib
 
 .PHONY: cleanall
 cleanall: clean

@@ -1,1 +1,1 @@
-export * from '../dist/integrations/express';
+export * from '../lib/integrations/express';

@@ -9,7 +9,7 @@ This is slightly more eloquent, but important reading.
  - [01 General](theoretical-reading/01-general.md)
  - [02 Namespaces and storing data](theoretical-reading/02-namespaces-and-storing-data.md)
  - [03 Expiration](theoretical-reading/03-expiration.md)
- - [04 Storages](theoretical-reading/04-storages.md)
+ - [04 Storages and lock managers](theoretical-reading/04-storages-and-lock-managers.md)
 
 ## [Integrations](integrations/readme.md)
 
@@ -24,3 +24,4 @@ There are currently two integrations built into HTTP Sessions:
  - [02 Session](api/02-session.md)
  - [03 SessionNamespace](api/03-session-namespace.md)
  - [04 StorageInterface](api/04-storage-interface.md)
+ - [05 LockManagerInterface](api/05-lock-manager-interface.md)

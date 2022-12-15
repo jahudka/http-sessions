@@ -1,1 +1,1 @@
-export * from '../dist/integrations/insaner';
+export * from '../lib/integrations/insaner';

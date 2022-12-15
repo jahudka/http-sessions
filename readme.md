@@ -17,13 +17,13 @@ npm install --save http-sessions
 ## Quick start
 
 ```typescript
-import { Session, InMemoryStorage } from 'http-sessions';
+import { Session, MemoizedStorage } from 'http-sessions';
 import { expressHttpSessions } from 'http-sessions/integrations/express';
 import * as express from 'express';
 
 const app = express();
-const session = new Session(new InMemoryStorage(), {
-  defaultExpiration: 86400,
+const session = new Session(new MemoizedStorage(), {
+  defaultExpiration: 7 * 24 * 3600, // expire the session in 1 week by default
 });
 
 app.use(expressHttpSessions(session));
@@ -34,26 +34,29 @@ app.get('/status', async (req, res) => {
     return;
   }
 
-  await session.start();
-  await session.close(); // session is now read-only
+  await session.start(true); // start in readonly mode
   const user = session.get('user');
   res.type('text').send(user ? `logged in user: ${user.name}` : 'not logged in');
 });
 
 app.post('/login', async (req, res) => {
-  await session.start();
-  
+  await session.start(); // start in read-write mode
+
   const user = await login(req.body.email, req.body.password);
-  session.set('user', user);
+  session.set('user', user, {
+    expires: 3600, // expire in 1 hour
+    sliding: true, // renew the 1-hour expiration whenever the session is started
+    until: 24 * 3600, // but at most for 24 hours
+  });
   
-  // **always** do this when the user logs in to help prevent session fixation attacks:
+  // **always** do this when the user logs in or out to help prevent session fixation attacks:
   await session.regenerateId();
   
   res.redirect('/status');
 });
 
 app.post('/logout', async (req, res) => {
-  await session.destroy();
+  await session.destroy(); // no need to call session.start() before session.destroy()
   res.redirect('/status');
 });
 ```

@@ -3,11 +3,11 @@
 ## Usage
 
 ```typescript
-import { Session, InMemoryStorage } from 'http-sessions';
+import { Session, MemoizedStorage } from 'http-sessions';
 import { installInsanerSessions } from 'http-sessions/integrations/insaner';
 import { HttpServer } from 'insaner';
 
-const session = new Session(new InMemoryStorage());
+const session = new Session(new MemoizedStorage());
 const server = new HttpServer();
 
 installInsanerSessions(server, session, {

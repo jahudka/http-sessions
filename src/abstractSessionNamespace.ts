@@ -14,13 +14,13 @@ export abstract class AbstractSessionNamespace<Values extends ValueMap> {
   ): Values[K] | undefined {
     this.assertReadable();
 
-    if (!this.data.values[key]) {
+    if (!this.data.values[key] && factory !== undefined) {
       this.data.values[key] = {
-        value: typeof factory === 'function' ? factory() : factory!,
+        value: typeof factory === 'function' ? factory() : factory,
       };
     }
 
-    return this.data.values[key].value;
+    return this.data.values[key]?.value;
   }
 
   public set<K extends Key<Values>>(

@@ -3,11 +3,11 @@
 ## Usage
 
 ```typescript
-import { Session, InMemoryStorage } from 'http-sessions';
+import { Session, MemoizedStorage } from 'http-sessions';
 import { expressHttpSessions } from 'http-sessions/integrations/express';
 import * as express from 'express';
 
-const session = new Session(new InMemoryStorage());
+const session = new Session(new MemoizedStorage());
 const app = express();
 
 app.use(expressHttpSessions(session, {

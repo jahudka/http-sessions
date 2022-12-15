@@ -1,31 +1,37 @@
 import type { ValueMap } from '../types';
+import type { SessionLock } from './sessionLock';
 
 export interface StorageInterface {
   /**
-   * This method should obtain a new unique session ID
-   * and acquire an exclusive lock on it. If a previous
-   * session ID is provided, any data associated with it
-   * should be moved to the new ID and if there is a lock
-   * acquired for the previous ID, it should be released.
+   * This method should acquire an exclusive lock on the given session ID.
+   * It should wait until the lock is available and reject only if it's
+   * impossible to acquire a lock.
    */
-  allocateAndLockId(previous?: string): Promise<string>;
+  lock(sessionId: string): Promise<SessionLock>;
 
   /**
-   * This method should acquire an exclusive lock on the session ID
-   * and then load and return the associated session data.
+   * This method should load the data associated with the given session.
+   * If a bare session ID is provided, the method should ensure the session
+   * data is read atomically, e.g. by acquiring a shared lock and releasing
+   * it when the data is read.
    */
-  lockAndRead(id: string): Promise<ValueMap | undefined>;
+  read(session: SessionLock | string): Promise<ValueMap | undefined>;
 
   /**
-   * This method should persist the session data, optionally scheduling
-   * the data to be purged upon expiration, and release the exclusive lock
-   * on the session ID.
+   * This method should persist the session data, optionally scheduling its expiration.
+   * If a bare session ID is provided, the method should ensure the data is
+   * written atomically, e.g. by acquiring an exclusive lock. If `release` is `true`
+   * or a bare session ID is provided, the session lock should be released after
+   * persisting the session data.
    */
-  writeAndUnlock(id: string, data: ValueMap, expires?: number): Promise<void> | void;
+  write(sessionId: string, data: ValueMap, expires?: number): Promise<void>;
+  write(lock: SessionLock, data: ValueMap, expires?: number, release?: boolean): Promise<void>;
 
   /**
-   * This method should purge any data related to the provided session ID
-   * and release the exclusive lock on the session ID, if one exists.
+   * This method should purge any session data associated with the given session.
+   * If a bare session ID is provided, the method should ensure the data is accessed
+   * atomically, e.g. by acquiring an exclusive lock. The session lock should be
+   * released after purging the session data.
    */
-  purge(id: string): Promise<void> | void;
+  purge(session: SessionLock | string): Promise<void>;
 }

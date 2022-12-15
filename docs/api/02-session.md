@@ -73,17 +73,39 @@ exists(): boolean
 This method returns `true` if a session ID exists. You can use it to conditionally start
 a session only if a session cookie is present.
 
+### `isActive()`
+
+```typescript
+isActive(): boolean
+```
+
+This method returns `true` if the session is active, i.e. it has been started, but not
+yet destroyed.
+
 ### `start()`
 
 ```typescript
-start(): Promise<void>
+start(readonly: boolean = false): Promise<void>
 ```
 
 This method starts a session, if it wasn't previously started. If a session ID exists
-at this point, the session data is loaded from storage and the session is locked until closed.
-If no expiration has been previously set for the session and a default expiration was
-defined using the `Session` constructor options, the session expiration is set to the
-specified default.
+at this point, the session data is loaded from storage and unless `readonly` is `true`,
+the session is locked until closed. If no expiration has been previously set for the
+session and a default expiration was defined using the `Session` constructor options,
+the session expiration is set to the specified default.
+
+### `release()`
+
+```typescript
+release(): Promise<void>
+```
+
+This method releases a previously acquired session lock, if one exists, without writing
+any session data to the storage. It can be useful when you started a session in read-write
+mode and you want to drop to readonly mode knowing that you haven't made any changes
+which would need to be persisted; also it can be handy as a last resort when handling
+uncaught errors in a catch-all error handler, so that the session doesn't get corrupted
+and doesn't stay locked (which would cause a deadlock).
 
 ### `close()`
 
@@ -106,7 +128,7 @@ This method destroys the current session, deleting all the session data. If a se
 is defined at this point, the session data will be purged from storage and the session lock
 will be released, if it has been previously acquired. Note that you don't need to start
 the session prior to destroying it. A new session with a new unique session ID can be started
-by calling [`start()`](#start) any time after calling `destroy()`.
+by calling [`start()`](#start) any time after a call to `destroy()` resolves.
 
 ### `getId()`
 
