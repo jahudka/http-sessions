@@ -28,17 +28,17 @@ function encodeValue(value: IPCValue): [Buffer, Buffer | undefined] {
   } else if (typeof value === 'boolean') {
     return [value ? type.true : type.false, undefined];
   } else if (typeof value === 'number') {
-    const buffer = Buffer.allocUnsafe(4);
-    buffer.writeFloatBE(value);
+    const buffer = Buffer.allocUnsafe(8);
+    buffer.writeDoubleLE(value);
     return [type.number, buffer];
   } else if (typeof value === 'string') {
     const buffer = Buffer.from(value);
     const length = Buffer.allocUnsafe(4);
-    length.writeUint32BE(buffer.byteLength);
+    length.writeUint32LE(buffer.byteLength);
     return [type.string, Buffer.concat([length, buffer])];
   } else if (Buffer.isBuffer(value)) {
     const length = Buffer.allocUnsafe(4);
-    length.writeUint32BE(value.byteLength);
+    length.writeUint32LE(value.byteLength);
     return [type.buffer, Buffer.concat([length, value])];
   } else {
     throw new TypeError('Cannot encode value');
@@ -89,17 +89,17 @@ export function decodeMessage(message: Buffer): IPCValue[] {
         values.push(false);
         break;
       case DataType.Number:
-        values.push(message.readFloatBE(offset));
-        offset += 4;
+        values.push(message.readDoubleLE(offset));
+        offset += 8;
         break;
       case DataType.String:
-        len = message.readUint32BE(offset);
+        len = message.readUint32LE(offset);
         offset += 4;
         values.push(message.slice(offset, offset + len).toString('utf-8'));
         offset += len;
         break;
       case DataType.Buffer:
-        len = message.readUint32BE(offset);
+        len = message.readUint32LE(offset);
         offset += 4;
         values.push(message.slice(offset, offset + len));
         offset += len;

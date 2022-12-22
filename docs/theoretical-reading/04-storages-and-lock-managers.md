@@ -47,6 +47,14 @@ The `FileLockManager` class uses `proper-lockfile` internally to manage locks on
 the session files; if you want to use it, you must install the `proper-lockfile`
 package in your project.
 
+## `SQLStorage`
+
+This class offers session data persistence and lock management by means
+of a relational SQL database. It doesn't provide an implementation for specific SQL
+dialects; instead, it relies on an adapter class which must be provided externally.
+Currently, there is an adapter for MikroORM available as an optional integration,
+or you can roll your own by implementing the `SQLAdapterInterface`.
+
 ## `DaemonStorage` and `DaemonLockManager`
 
 The `DaemonStorage` and `DaemonLockManager` classes allow one to separate the

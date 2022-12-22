@@ -7,11 +7,15 @@ import type { IPCValue } from './ipc';
 import type { LockId, SessionId,StorageDaemonMessage } from './types';
 import { isStorageDaemonMessage } from './types';
 
+type Entry = {
+  data: Buffer;
+  tmr?: NodeJS.Timeout;
+};
 
 export class StorageClientHandler extends AbstractClientHandler<StorageDaemonMessage> {
   private readonly fileManager?: FileManager;
   private readonly lockManager: LockManagerInterface;
-  private readonly sessions: Map<string, Buffer> = new Map();
+  private readonly sessions: Map<string, Entry> = new Map();
 
   public constructor(conn: Socket, storageDir?: string) {
     super(conn);
@@ -49,7 +53,7 @@ export class StorageClientHandler extends AbstractClientHandler<StorageDaemonMes
 
   private async write(session: LockId | string, data: Buffer, expires?: number, release?: boolean): Promise<void> {
     const lock = typeof session === 'string' ? await this.lockManager.acquire(session) : this.getLock(session);
-    await this.writeData(lock.sessionId, data);
+    await this.writeData(lock.sessionId, data, expires);
     (release || typeof session === 'string') && await lock.release();
   }
 
@@ -69,21 +73,24 @@ export class StorageClientHandler extends AbstractClientHandler<StorageDaemonMes
 
   private async readData(id: string): Promise<Buffer | undefined> {
     const memoized = this.sessions.get(id);
+    memoized && memoized.tmr && clearTimeout(memoized.tmr);
 
     if (memoized || !this.fileManager) {
-      return memoized;
+      return memoized?.data;
     }
 
     const data = await this.fileManager.readFile(id);
-    data && this.sessions.set(id, data);
+    data && this.sessions.set(id, { data });
     return data;
   }
 
-  private async writeData(id: string, data: Buffer): Promise<void> {
-    this.sessions.set(id, data);
+  private async writeData(id: string, data: Buffer, expires?: number): Promise<void> {
+    const entry: Entry = { data };
+    expires && (entry.tmr = setTimeout(() => this.purge(id), expires - Date.now()));
+    this.sessions.set(id, entry);
 
     if (this.fileManager) {
-      await this.fileManager.writeFile(id, data);
+      await this.fileManager.writeFile(id, data, expires);
     }
   }
 

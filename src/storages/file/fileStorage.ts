@@ -27,8 +27,8 @@ export class FileStorage extends AbstractStorage {
     return this.manager.readFile(id);
   }
 
-  protected async writeSessionData(id: string, data: ValueMap): Promise<void> {
-    await this.manager.writeFile(id, data);
+  protected async writeSessionData(id: string, data: ValueMap, expires?: number): Promise<void> {
+    await this.manager.writeFile(id, data, expires);
   }
 
   protected async purgeSessionData(id: string): Promise<void> {

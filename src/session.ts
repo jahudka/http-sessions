@@ -138,14 +138,12 @@ export class Session<
 
     this.state.mode = 'readonly';
 
-    if (!this.state.lock && !this.state.id) {
-      this.state.id = v4();
-      this.state.lock = await this.storage.lock(this.state.id);
-    }
-
     if (this.state.lock) {
       await this.storage.write(this.state.lock, this.data, this.data.expires || undefined, true);
       delete this.state.lock;
+    } else if (!this.state.id) {
+      this.state.id = v4();
+      await this.storage.write(this.state.id, this.data, this.data.expires || undefined);
     }
   }
 

@@ -1,5 +1,9 @@
 import type { ExpirationMeta, ExpirationOptions, SessionData } from './types';
 
+export async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function normalizeExpiration(
   value: Date | string | number | undefined,
 ): number | undefined;
